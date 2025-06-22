@@ -17,7 +17,7 @@ A high-performance, feature-complete Least Recently Used (LRU) cache implementat
 - 🎯 **Flexible Configuration**: Extensive options for customizing cache behavior
 - 🔧 **Disposal Callbacks**: Clean up resources when items are evicted
 - 🛡️ **Type-Safe**: Full Swift type safety with generics
-- 🧵 **Thread-Safe**: Safe for concurrent access (coming soon)
+- 🧵 **Thread-Safe**: Safe for concurrent access with lock-based synchronization
 - 📊 **Swift 6**: Built with the latest Swift features
 
 ## Installation

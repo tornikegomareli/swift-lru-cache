@@ -1,7 +1,7 @@
 import Foundation
 
 /// Options for the get operation
-public struct GetOptions {
+public struct GetOptions: Sendable {
     public var allowStale: Bool?
     public var updateAgeOnGet: Bool?
     public var noDeleteOnStaleGet: Bool?
@@ -18,7 +18,7 @@ public struct GetOptions {
 }
 
 /// Options for the set operation
-public struct SetOptions {
+public struct SetOptions: Sendable {
     public var ttl: TimeInterval?
     public var noUpdateTTL: Bool?
     public var size: Int?

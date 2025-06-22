@@ -80,11 +80,11 @@ struct TTLTests {
 
     @Test("Cache calls dispose with expire reason for TTL items")
     func testDisposeOnExpire() async throws {
-        var disposedItems: [(String, Int, DisposeReason)] = []
+        let disposalTracker = DisposalTracker<String, Int>()
 
         var config = try Configuration<String, Int>(max: 10, ttl: 0.5)
         config.dispose = { value, key, reason in
-            disposedItems.append((key, value, reason))
+            disposalTracker.track(value: value, key: key, reason: reason)
         }
         let cache = LRUCache<String, Int>(configuration: config)
 
@@ -94,10 +94,11 @@ struct TTLTests {
 
         _ = cache.get("key1") // This should trigger disposal
 
-        #expect(disposedItems.count == 1)
-        #expect(disposedItems[0].0 == "key1")
-        #expect(disposedItems[0].1 == 100)
-        #expect(disposedItems[0].2 == .expire)
+        #expect(disposalTracker.count == 1)
+        let item = disposalTracker.getItem(at: 0)!
+        #expect(item.0 == "key1")
+        #expect(item.1 == 100)
+        #expect(item.2 == .expire)
     }
 
     @Test("Cache purgeStale removes all expired items")
@@ -143,12 +144,12 @@ struct TTLTests {
 
     @Test("Cache respects ttlAutopurge setting")
     func testTTLAutopurge() async throws {
-        var disposedItems: [(String, Int, DisposeReason)] = []
+        let disposalTracker = DisposalTracker<String, Int>()
 
         var config = try Configuration<String, Int>(max: 10, ttl: 0.5)
         config.ttlAutopurge = true
         config.dispose = { value, key, reason in
-            disposedItems.append((key, value, reason))
+            disposalTracker.track(value: value, key: key, reason: reason)
         }
         let cache = LRUCache<String, Int>(configuration: config)
 
@@ -159,7 +160,7 @@ struct TTLTests {
 
         cache.set("key3", value: 300) // This should trigger autopurge
 
-        #expect(disposedItems.count >= 2) // Both expired items should be disposed
+        #expect(disposalTracker.count >= 2) // Both expired items should be disposed
         #expect(cache.size == 1) // Only key3 should remain
     }
 }

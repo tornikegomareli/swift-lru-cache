@@ -171,14 +171,14 @@ struct SizeTrackingTests {
 
     @Test("Cache size-based eviction calls dispose with correct reason")
     func testSizeEvictionDispose() throws {
-        var disposedItems: [(String, Data, DisposeReason)] = []
+        let disposalTracker = DisposalTracker<String, Data>()
 
         var config = try Configuration<String, Data>(maxSize: 500)
         config.sizeCalculation = { data, _ in
             data.count
         }
         config.dispose = { value, key, reason in
-            disposedItems.append((key, value, reason))
+            disposalTracker.track(value: value, key: key, reason: reason)
         }
         let cache = LRUCache<String, Data>(configuration: config)
 
@@ -190,9 +190,10 @@ struct SizeTrackingTests {
         cache.set("key2", value: data2)
         cache.set("key3", value: data3)
 
-        #expect(disposedItems.count == 1)
-        #expect(disposedItems[0].0 == "key1")
-        #expect(disposedItems[0].2 == .evict)
+        #expect(disposalTracker.count == 1)
+        let item = disposalTracker.getItem(at: 0)!
+        #expect(item.0 == "key1")
+        #expect(item.2 == .evict)
     }
 
     @Test("Cache respects both max and maxSize constraints")
