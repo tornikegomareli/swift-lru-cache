@@ -1,3 +1,10 @@
+# Claude AI specific files
+.claude/
+CLAUDE.md
+TASK.md
+PLANNING.md
+actor-based.md
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
