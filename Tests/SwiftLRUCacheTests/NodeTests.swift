@@ -52,10 +52,10 @@ struct NodeTests {
 
     @Test("Node can store size metadata")
     func testNodeSizeMetadata() {
-        let node = LRUNode<String, Data>(key: "data", value: Data(repeating: 0, count: 1024))
-        node.size = 1024
+        let node = LRUNode<String, Data>(key: "data", value: Data(repeating: 0, count: 1_024))
+        node.size = 1_024
 
-        #expect(node.size == 1024)
+        #expect(node.size == 1_024)
     }
 
     @Test("Node can store TTL metadata")

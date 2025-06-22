@@ -4,7 +4,6 @@ import Foundation
 
 @Suite("Advanced Operations Tests")
 struct AdvancedOperationsTests {
-
     @Test("pop removes and returns LRU item")
     func testPop() throws {
         let config = try Configuration<String, Int>(max: 3)
@@ -173,7 +172,7 @@ struct AdvancedOperationsTests {
 
     @Test("dump with TTL and size info")
     func testDumpWithMetadata() throws {
-        var config = try Configuration<String, Data>(maxSize: 1024, ttl: 60)
+        var config = try Configuration<String, Data>(maxSize: 1_024, ttl: 60)
         config.sizeCalculation = { value, _ in value.count }
 
         let cache = LRUCache<String, Data>(configuration: config)
