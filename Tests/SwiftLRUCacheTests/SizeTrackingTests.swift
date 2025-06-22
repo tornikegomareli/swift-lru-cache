@@ -4,7 +4,6 @@ import Foundation
 
 @Suite("Size Tracking Tests")
 struct SizeTrackingTests {
-
     @Test("Cache respects maxSize constraint")
     func testMaxSizeConstraint() throws {
         var config = try Configuration<String, Data>(maxSize: 1024) // 1KB max
@@ -114,7 +113,7 @@ struct SizeTrackingTests {
             let age: Int
 
             var estimatedSize: Int {
-                return name.count + 8 // String chars + Int size
+                name.count + 8 // String chars + Int size
             }
         }
 
@@ -156,7 +155,7 @@ struct SizeTrackingTests {
 
     @Test("Cache without size calculation defaults to count-based eviction")
     func testNoSizeCalculation() throws {
-        let config = try Configuration<String, Data>(maxSize: 1024)
+        let config = try Configuration<String, Data>(maxSize: 1_024)
         // No sizeCalculation provided
         let cache = LRUCache<String, Data>(configuration: config)
 

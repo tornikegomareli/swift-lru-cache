@@ -4,7 +4,6 @@ import Foundation
 
 @Suite("Basic LRU Cache Tests")
 struct BasicLRUCacheTests {
-
     @Test("Cache can be initialized with configuration")
     func testCacheInitialization() throws {
         let config = try Configuration<String, Int>(max: 100)

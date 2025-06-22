@@ -4,7 +4,6 @@ import Foundation
 
 @Suite("Configuration Tests")
 struct ConfigurationTests {
-
     @Test("Configuration requires at least one constraint")
     func testConfigurationRequiresConstraint() throws {
         #expect(throws: ConfigurationError.noConstraints) {
@@ -22,7 +21,7 @@ struct ConfigurationTests {
 
     @Test("Configuration accepts maxSize constraint")
     func testConfigurationWithMaxSize() throws {
-        let config = try Configuration<String, String>(maxSize: 1024)
+        let config = try Configuration<String, String>(maxSize: 1_024)
         #expect(config.max == nil)
         #expect(config.maxSize == 1024)
         #expect(config.ttl == nil)
@@ -38,7 +37,7 @@ struct ConfigurationTests {
 
     @Test("Configuration accepts multiple constraints")
     func testConfigurationWithMultipleConstraints() throws {
-        let config = try Configuration<String, String>(max: 100, maxSize: 1024, ttl: 300)
+        let config = try Configuration<String, String>(max: 100, maxSize: 1_024, ttl: 300)
         #expect(config.max == 100)
         #expect(config.maxSize == 1024)
         #expect(config.ttl == 300)
@@ -111,7 +110,7 @@ struct ConfigurationTests {
 
     @Test("Configuration accepts size calculation function")
     func testConfigurationWithSizeCalculation() throws {
-        var config = try Configuration<String, Data>(maxSize: 1024)
+        var config = try Configuration<String, Data>(maxSize: 1_024)
         config.sizeCalculation = { value, _ in
             value.count
         }
@@ -125,11 +124,13 @@ struct ConfigurationTests {
 
     @Test("Configuration validates maxEntrySize")
     func testConfigurationMaxEntrySize() throws {
-        var config = try Configuration<String, String>(maxSize: 1024)
+        var config = try Configuration<String, String>(maxSize: 1_024)
         config.maxEntrySize = 512
 
         #expect(config.maxEntrySize == 512)
-        #expect(config.maxEntrySize! <= config.maxSize!)
+        if let maxEntrySize = config.maxEntrySize, let maxSize = config.maxSize {
+            #expect(maxEntrySize <= maxSize)
+        }
     }
 
     @Test("Configuration is a value type")
