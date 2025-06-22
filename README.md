@@ -213,11 +213,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Benchmarks
 
-Comprehensive benchmarks were performed to ensure SwiftLRUCache delivers the best performance in the Swift ecosystem.
+Benchmarks were performed to ensure SwiftLRUCache delivers the best performance in the Swift ecosystem.
 
 ### Benchmark Environment
 - **Platform**: macOS Version 15.4.1
-- **Swift Version**: 6.1
+- **Hardware**: M3 Pro
+- **Swift Version**: 6.0
 - **Build**: Release mode with optimizations
 
 ### Detailed Results
