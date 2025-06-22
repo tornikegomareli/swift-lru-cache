@@ -7,11 +7,11 @@ final class LRUNode<Key, Value> {
     var value: Value
     weak var prev: LRUNode?
     var next: LRUNode?
-    
+
     var size: Int?
     var ttl: TimeInterval?
     var insertTime: Date?
-    
+
     init(key: Key, value: Value) {
         self.key = key
         self.value = value

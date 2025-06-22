@@ -5,7 +5,7 @@ public struct GetOptions {
     public var allowStale: Bool?
     public var updateAgeOnGet: Bool?
     public var noDeleteOnStaleGet: Bool?
-    
+
     public init(
         allowStale: Bool? = nil,
         updateAgeOnGet: Bool? = nil,
@@ -23,7 +23,7 @@ public struct SetOptions {
     public var noUpdateTTL: Bool?
     public var size: Int?
     public var noDisposeOnSet: Bool?
-    
+
     public init(
         ttl: TimeInterval? = nil,
         noUpdateTTL: Bool? = nil,
