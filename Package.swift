@@ -18,24 +18,17 @@ let package = Package(
             targets: ["SwiftLRUCache"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.54.0")
     ],
     targets: [
         .target(
             name: "SwiftLRUCache",
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
-            ],
-            plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLint")
             ]
         ),
         .testTarget(
             name: "SwiftLRUCacheTests",
-            dependencies: ["SwiftLRUCache"],
-            plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLint")
-            ]
+            dependencies: ["SwiftLRUCache"]
         ),
     ]
 )

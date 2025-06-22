@@ -32,6 +32,20 @@ dependencies: [
 ]
 ```
 
+## Development
+
+### Running SwiftLint
+
+This project includes a pre-built SwiftLint binary for code linting. To run SwiftLint:
+
+```bash
+# Run SwiftLint
+./scripts/lint.sh
+
+# Run SwiftLint with autocorrect
+./scripts/lint.sh --fix
+```
+
 ## Usage
 
 ### Basic Usage
