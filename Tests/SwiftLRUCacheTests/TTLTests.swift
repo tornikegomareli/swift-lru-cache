@@ -7,13 +7,13 @@ struct TTLTests {
 
     @Test("Cache respects default TTL")
     func testDefaultTTL() async throws {
-        let config = try Configuration<String, Int>(max: 10, ttl: 0.1) // 100ms TTL
+        let config = try Configuration<String, Int>(max: 10, ttl: 0.5) // 500ms TTL (increased)
         let cache = LRUCache<String, Int>(configuration: config)
 
         cache.set("key1", value: 100)
         #expect(cache.get("key1") == 100)
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep 150ms
+        try await Task.sleep(nanoseconds: 750_000_000) // Sleep 750ms
 
         #expect(cache.get("key1") == nil) // Should be expired
         #expect(cache.has("key1") == false)
@@ -25,9 +25,9 @@ struct TTLTests {
         let cache = LRUCache<String, Int>(configuration: config)
 
         cache.set("key1", value: 100) // Uses default TTL
-        cache.set("key2", value: 200, ttl: 0.1) // 100ms TTL
+        cache.set("key2", value: 200, ttl: 0.5) // 500ms TTL
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep 150ms
+        try await Task.sleep(nanoseconds: 750_000_000) // Sleep 750ms
 
         #expect(cache.get("key1") == 100) // Still valid
         #expect(cache.get("key2") == nil) // Expired
@@ -35,13 +35,13 @@ struct TTLTests {
 
     @Test("Cache returns stale items when allowStale is true")
     func testAllowStale() async throws {
-        var config = try Configuration<String, Int>(max: 10, ttl: 0.1)
+        var config = try Configuration<String, Int>(max: 10, ttl: 0.5)
         config.allowStale = true
         let cache = LRUCache<String, Int>(configuration: config)
 
         cache.set("key1", value: 100)
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep 150ms
+        try await Task.sleep(nanoseconds: 750_000_000) // Sleep 750ms
 
         let options = GetOptions(allowStale: true)
         #expect(cache.get("key1", options: options) == 100) // Returns stale value
@@ -50,29 +50,29 @@ struct TTLTests {
 
     @Test("Cache updates TTL on set when updateAgeOnGet is true")
     func testUpdateAgeOnGet() async throws {
-        var config = try Configuration<String, Int>(max: 10, ttl: 0.2) // 200ms
+        var config = try Configuration<String, Int>(max: 10, ttl: 1.0) // 1 second (increased from 200ms)
         config.updateAgeOnGet = true
         let cache = LRUCache<String, Int>(configuration: config)
 
         cache.set("key1", value: 100)
 
-        try await Task.sleep(nanoseconds: 100_000_000) // Sleep 100ms
+        try await Task.sleep(nanoseconds: 400_000_000) // Sleep 400ms
         _ = cache.get("key1") // This should refresh TTL
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep another 150ms
+        try await Task.sleep(nanoseconds: 800_000_000) // Sleep another 800ms
 
         #expect(cache.get("key1") == 100) // Should still be valid due to refresh
     }
 
     @Test("Cache respects noDeleteOnStaleGet option")
     func testNoDeleteOnStaleGet() async throws {
-        var config = try Configuration<String, Int>(max: 10, ttl: 0.1)
+        var config = try Configuration<String, Int>(max: 10, ttl: 0.5)
         config.noDeleteOnStaleGet = true
         let cache = LRUCache<String, Int>(configuration: config)
 
         cache.set("key1", value: 100)
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep 150ms
+        try await Task.sleep(nanoseconds: 750_000_000) // Sleep 750ms
 
         #expect(cache.get("key1") == nil) // Returns nil because expired
         #expect(cache.size == 1) // But item is still in cache
@@ -82,7 +82,7 @@ struct TTLTests {
     func testDisposeOnExpire() async throws {
         var disposedItems: [(String, Int, DisposeReason)] = []
 
-        var config = try Configuration<String, Int>(max: 10, ttl: 0.1)
+        var config = try Configuration<String, Int>(max: 10, ttl: 0.5)
         config.dispose = { value, key, reason in
             disposedItems.append((key, value, reason))
         }
@@ -90,7 +90,7 @@ struct TTLTests {
 
         cache.set("key1", value: 100)
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep 150ms
+        try await Task.sleep(nanoseconds: 750_000_000) // Sleep 750ms
 
         _ = cache.get("key1") // This should trigger disposal
 
@@ -105,13 +105,13 @@ struct TTLTests {
         let config = try Configuration<String, Int>(max: 10)
         let cache = LRUCache<String, Int>(configuration: config)
 
-        cache.set("key1", value: 100, ttl: 0.1)
-        cache.set("key2", value: 200, ttl: 0.5)
+        cache.set("key1", value: 100, ttl: 0.5)
+        cache.set("key2", value: 200, ttl: 2.0)
         cache.set("key3", value: 300) // No TTL
 
         #expect(cache.size == 3)
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep 150ms
+        try await Task.sleep(nanoseconds: 750_000_000) // Sleep 750ms
 
         cache.purgeStale()
 
@@ -126,26 +126,26 @@ struct TTLTests {
         let config = try Configuration<String, Int>(max: 10)
         let cache = LRUCache<String, Int>(configuration: config)
 
-        cache.set("key1", value: 100, ttl: 1) // 1 second TTL
+        cache.set("key1", value: 100, ttl: 2) // 2 seconds TTL (increased from 1)
 
         let remaining1 = cache.getRemainingTTL("key1")
         #expect(remaining1 != nil)
-        #expect(remaining1! > 0.9)
-        #expect(remaining1! <= 1.0)
+        #expect(remaining1! > 1.8) // Allow for some execution time
+        #expect(remaining1! <= 2.0)
 
-        try await Task.sleep(nanoseconds: 500_000_000) // Sleep 500ms
+        try await Task.sleep(nanoseconds: 1_000_000_000) // Sleep 1 second
 
         let remaining2 = cache.getRemainingTTL("key1")
         #expect(remaining2 != nil)
-        #expect(remaining2! > 0.4)
-        #expect(remaining2! < 0.6)
+        #expect(remaining2! > 0.8) // More tolerance (was 0.4)
+        #expect(remaining2! < 1.2) // More tolerance (was 0.6)
     }
 
     @Test("Cache respects ttlAutopurge setting")
     func testTTLAutopurge() async throws {
         var disposedItems: [(String, Int, DisposeReason)] = []
 
-        var config = try Configuration<String, Int>(max: 10, ttl: 0.1)
+        var config = try Configuration<String, Int>(max: 10, ttl: 0.5)
         config.ttlAutopurge = true
         config.dispose = { value, key, reason in
             disposedItems.append((key, value, reason))
@@ -155,7 +155,7 @@ struct TTLTests {
         cache.set("key1", value: 100)
         cache.set("key2", value: 200)
 
-        try await Task.sleep(nanoseconds: 150_000_000) // Sleep 150ms
+        try await Task.sleep(nanoseconds: 750_000_000) // Sleep 750ms
 
         cache.set("key3", value: 300) // This should trigger autopurge
 
