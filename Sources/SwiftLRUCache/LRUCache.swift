@@ -25,9 +25,29 @@ public final class LRUCache<Key: Hashable, Value> {
     }
     
     /// Get a value from the cache
-    public func get(_ key: Key) -> Value? {
+    public func get(_ key: Key, options: GetOptions? = nil) -> Value? {
         guard let node = dict[key] else {
             return nil
+        }
+        
+        let now = Date()
+        
+        if isStale(node, now: now) {
+            let allowStale = options?.allowStale ?? configuration.allowStale
+            let noDeleteOnStaleGet = options?.noDeleteOnStaleGet ?? configuration.noDeleteOnStaleGet
+            
+            if !noDeleteOnStaleGet {
+                removeNode(node)
+                dict.removeValue(forKey: key)
+                configuration.dispose?(node.value, key, .expire)
+            }
+            
+            return allowStale ? node.value : nil
+        }
+        
+        let updateAgeOnGet = options?.updateAgeOnGet ?? configuration.updateAgeOnGet
+        if updateAgeOnGet && node.ttl != nil {
+            node.insertTime = now
         }
         
         moveToHead(node)
@@ -35,14 +55,29 @@ public final class LRUCache<Key: Hashable, Value> {
     }
     
     /// Set a value in the cache
-    public func set(_ key: Key, value: Value) {
+    public func set(_ key: Key, value: Value, ttl: TimeInterval? = nil) {
+        let now = Date()
+        
+        if configuration.ttlAutopurge {
+            purgeStale()
+        }
+        
         if let existingNode = dict[key] {
             existingNode.value = value
+            
+            if !configuration.noUpdateTTL || existingNode.ttl == nil {
+                existingNode.ttl = ttl ?? configuration.ttl
+                existingNode.insertTime = existingNode.ttl != nil ? now : nil
+            }
+            
             moveToHead(existingNode)
             return
         }
         
         let newNode = LRUNode(key: key, value: value)
+        newNode.ttl = ttl ?? configuration.ttl
+        newNode.insertTime = newNode.ttl != nil ? now : nil
+        
         dict[key] = newNode
         addToHead(newNode)
         
@@ -53,7 +88,24 @@ public final class LRUCache<Key: Hashable, Value> {
     
     /// Check if a key exists in the cache
     public func has(_ key: Key) -> Bool {
-        return dict[key] != nil
+        guard let node = dict[key] else {
+            return false
+        }
+        
+        if isStale(node) {
+            if !configuration.noDeleteOnStaleGet {
+                removeNode(node)
+                dict.removeValue(forKey: key)
+                configuration.dispose?(node.value, key, .expire)
+            }
+            return false
+        }
+        
+        if configuration.updateAgeOnHas && node.ttl != nil {
+            node.insertTime = Date()
+        }
+        
+        return true
     }
     
     /// Delete a key from the cache
@@ -135,5 +187,49 @@ public final class LRUCache<Key: Hashable, Value> {
         dict.removeValue(forKey: tailNode.key)
         
         configuration.dispose?(tailNode.value, tailNode.key, .evict)
+    }
+    
+    /// Remove all stale entries
+    public func purgeStale() {
+        let now = Date()
+        var nodesToRemove: [LRUNode<Key, Value>] = []
+        
+        for (_, node) in dict {
+            if isStale(node, now: now) {
+                nodesToRemove.append(node)
+            }
+        }
+        
+        for node in nodesToRemove {
+            removeNode(node)
+            dict.removeValue(forKey: node.key)
+            configuration.dispose?(node.value, node.key, .expire)
+        }
+    }
+    
+    /// Get the remaining TTL for a key
+    public func getRemainingTTL(_ key: Key) -> TimeInterval? {
+        guard let node = dict[key],
+              let ttl = node.ttl,
+              let insertTime = node.insertTime else {
+            return nil
+        }
+        
+        let elapsed = Date().timeIntervalSince(insertTime)
+        let remaining = ttl - elapsed
+        
+        return remaining > 0 ? remaining : 0
+    }
+    
+    private func isStale(_ node: LRUNode<Key, Value>, now: Date? = nil) -> Bool {
+        guard let ttl = node.ttl,
+              let insertTime = node.insertTime else {
+            return false
+        }
+        
+        let checkTime = now ?? Date()
+        let age = checkTime.timeIntervalSince(insertTime)
+        
+        return age > ttl
     }
 }
