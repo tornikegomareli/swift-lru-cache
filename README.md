@@ -10,15 +10,15 @@ A high-performance, feature-complete Least Recently Used (LRU) cache implementat
 
 ## Features
 
-- 🚀 **O(1) Performance**: All core operations (get, set, delete) maintain O(1) average time complexity
-- 🔄 **True LRU Eviction**: Automatically evicts least recently used items when capacity is reached
-- ⏱️ **TTL Support**: Time-to-live support with lazy expiration checking
-- 📏 **Size-Based Eviction**: Configure maximum cache size based on item count or total size
-- 🎯 **Flexible Configuration**: Extensive options for customizing cache behavior
-- 🔧 **Disposal Callbacks**: Clean up resources when items are evicted
-- 🛡️ **Type-Safe**: Full Swift type safety with generics
-- 🧵 **Thread-Safe**: Safe for concurrent access using Swift's actor model
-- 📊 **Swift 6**: Built with the latest Swift features
+- **O(1) Performance**: All core operations (get, set, delete) maintain O(1) average time complexity
+- **True LRU Eviction**: Automatically evicts least recently used items when capacity is reached
+- **TTL Support**: Time-to-live support with lazy expiration checking
+- **Size-Based Eviction**: Configure maximum cache size based on item count or total size
+- **Flexible Configuration**: Extensive options for customizing cache behavior
+- **Disposal Callbacks**: Clean up resources when items are evicted
+- **Type-Safe**: Full Swift type safety with generics
+- **Thread-Safe**: Safe for concurrent access using Swift's actor model
+- **Swift 6**: Built with the latest Swift features
 
 ## Installation
 
@@ -28,22 +28,8 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tornikegomareli/swift-lru-cache.git", from: "0.2.0")
+    .package(url: "https://github.com/tornikegomareli/swift-lru-cache.git", from: "0.4.0")
 ]
-```
-
-## Development
-
-### Running SwiftLint
-
-This project includes a pre-built SwiftLint binary for code linting. To run SwiftLint:
-
-```bash
-# Run SwiftLint
-./scripts/lint.sh
-
-# Run SwiftLint with autocorrect
-./scripts/lint.sh --fix
 ```
 
 ## Usage
@@ -53,52 +39,52 @@ This project includes a pre-built SwiftLint binary for code linting. To run Swif
 ```swift
 import SwiftLRUCache
 
-// Create a cache with maximum 100 items
+/// Create a cache with maximum 100 items
 let config = try Configuration<String, Data>(max: 100)
 let cache = LRUCache<String, Data>(configuration: config)
 
-// Set values (async)
+/// Set values (async)
 await cache.set("key1", value: data1)
 await cache.set("key2", value: data2)
 
-// Get values (async)
+/// Get values (async)
 if let data = await cache.get("key1") {
     // Use the data
 }
 
-// Check existence (async)
+/// Check existence (async)
 if await cache.has("key2") {
     // Key exists
 }
 
-// Delete items (async)
+/// Delete items (async)
 await cache.delete("key1")
 
-// Clear cache (async)
+/// Clear cache (async)
 await cache.clear()
 ```
 
 ### TTL (Time To Live)
 
 ```swift
-// Cache with default TTL of 5 minutes
+/// Cache with default TTL of 5 minutes
 let config = try Configuration<String, String>(max: 1000, ttl: 300)
 let cache = LRUCache<String, String>(configuration: config)
 
-// Set item with custom TTL
+/// Set item with custom TTL
 await cache.set("session", value: "abc123", ttl: 3600) // 1 hour
 
-// Get remaining TTL
+/// Get remaining TTL
 if let remaining = await cache.getRemainingTTL("session") {
     print("Session expires in \(remaining) seconds")
 }
 
-// Allow stale items
+/// Allow stale items
 var config = try Configuration<String, String>(max: 100, ttl: 60)
 config.allowStale = true
 let cache = LRUCache<String, String>(configuration: config)
 
-// Returns stale value if expired
+/// Returns stale value if expired
 let value = await cache.get("key", options: GetOptions(allowStale: true))
 ```
 
@@ -111,7 +97,7 @@ config.sizeCalculation = { data, _ in
 }
 let cache = LRUCache<String, Data>(configuration: config)
 
-// Items will be evicted when total size exceeds 1MB
+/// Items will be evicted when total size exceeds 1MB
 await cache.set("image1", value: imageData)
 ```
 
@@ -120,7 +106,7 @@ await cache.set("image1", value: imageData)
 ```swift
 var config = try Configuration<String, FileHandle>(max: 10)
 config.dispose = { handle, key, reason in
-    // Clean up when items are removed
+    /// Clean up when items are removed
     handle.closeFile()
     print("Disposed \(key) due to \(reason)")
 }
