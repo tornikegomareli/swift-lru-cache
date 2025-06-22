@@ -1,6 +1,6 @@
 # swift LRU cache
 
-[![Swift](https://img.shields.io/badge/Swift-6.1-orange.svg)](https://swift.org)
+[![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![CI](https://github.com/tornikegomareli/swift-lru-cache/workflows/CI/badge.svg)](https://github.com/tornikegomareli/swift-lru-cache/actions)
 [![codecov](https://codecov.io/gh/tornikegomareli/swift-lru-cache/branch/main/graph/badge.svg)](https://codecov.io/gh/tornikegomareli/swift-lru-cache)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
