@@ -26,6 +26,10 @@ let package = Package(
                 .enableExperimentalFeature("StrictConcurrency")
             ]
         ),
+        .executableTarget(
+            name: "SwiftLRUCacheBenchmarks",
+            dependencies: ["SwiftLRUCache"]
+        ),
         .testTarget(
             name: "SwiftLRUCacheTests",
             dependencies: ["SwiftLRUCache"]
