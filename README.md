@@ -17,7 +17,7 @@ A high-performance, feature-complete Least Recently Used (LRU) cache implementat
 - 🎯 **Flexible Configuration**: Extensive options for customizing cache behavior
 - 🔧 **Disposal Callbacks**: Clean up resources when items are evicted
 - 🛡️ **Type-Safe**: Full Swift type safety with generics
-- 🧵 **Thread-Safe**: Safe for concurrent access with lock-based synchronization
+- 🧵 **Thread-Safe**: Safe for concurrent access using Swift's actor model
 - 📊 **Swift 6**: Built with the latest Swift features
 
 ## Installation
@@ -57,25 +57,25 @@ import SwiftLRUCache
 let config = try Configuration<String, Data>(max: 100)
 let cache = LRUCache<String, Data>(configuration: config)
 
-// Set values
-cache.set("key1", value: data1)
-cache.set("key2", value: data2)
+// Set values (async)
+await cache.set("key1", value: data1)
+await cache.set("key2", value: data2)
 
-// Get values
-if let data = cache.get("key1") {
+// Get values (async)
+if let data = await cache.get("key1") {
     // Use the data
 }
 
-// Check existence
-if cache.has("key2") {
+// Check existence (async)
+if await cache.has("key2") {
     // Key exists
 }
 
-// Delete items
-cache.delete("key1")
+// Delete items (async)
+await cache.delete("key1")
 
-// Clear cache
-cache.clear()
+// Clear cache (async)
+await cache.clear()
 ```
 
 ### TTL (Time To Live)
@@ -86,10 +86,10 @@ let config = try Configuration<String, String>(max: 1000, ttl: 300)
 let cache = LRUCache<String, String>(configuration: config)
 
 // Set item with custom TTL
-cache.set("session", value: "abc123", ttl: 3600) // 1 hour
+await cache.set("session", value: "abc123", ttl: 3600) // 1 hour
 
 // Get remaining TTL
-if let remaining = cache.getRemainingTTL("session") {
+if let remaining = await cache.getRemainingTTL("session") {
     print("Session expires in \(remaining) seconds")
 }
 
@@ -99,7 +99,7 @@ config.allowStale = true
 let cache = LRUCache<String, String>(configuration: config)
 
 // Returns stale value if expired
-let value = cache.get("key", options: GetOptions(allowStale: true))
+let value = await cache.get("key", options: GetOptions(allowStale: true))
 ```
 
 ### Size-Based Eviction
@@ -112,7 +112,7 @@ config.sizeCalculation = { data, _ in
 let cache = LRUCache<String, Data>(configuration: config)
 
 // Items will be evicted when total size exceeds 1MB
-cache.set("image1", value: imageData)
+await cache.set("image1", value: imageData)
 ```
 
 ### Disposal Callbacks

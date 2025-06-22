@@ -5,14 +5,14 @@ import Foundation
 @Suite("Configuration Tests")
 struct ConfigurationTests {
     @Test("Configuration requires at least one constraint")
-    func testConfigurationRequiresConstraint() throws {
+    func testConfigurationRequiresConstraint() async throws {
         #expect(throws: ConfigurationError.noConstraints) {
             try Configuration<String, String>()
         }
     }
 
     @Test("Configuration accepts max constraint")
-    func testConfigurationWithMax() throws {
+    func testConfigurationWithMax() async throws {
         let config = try Configuration<String, String>(max: 100)
         #expect(config.max == 100)
         #expect(config.maxSize == nil)
@@ -20,7 +20,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration accepts maxSize constraint")
-    func testConfigurationWithMaxSize() throws {
+    func testConfigurationWithMaxSize() async throws {
         let config = try Configuration<String, String>(maxSize: 1_024)
         #expect(config.max == nil)
         #expect(config.maxSize == 1024)
@@ -28,7 +28,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration accepts TTL constraint")
-    func testConfigurationWithTTL() throws {
+    func testConfigurationWithTTL() async throws {
         let config = try Configuration<String, String>(ttl: 300)
         #expect(config.max == nil)
         #expect(config.maxSize == nil)
@@ -36,7 +36,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration accepts multiple constraints")
-    func testConfigurationWithMultipleConstraints() throws {
+    func testConfigurationWithMultipleConstraints() async throws {
         let config = try Configuration<String, String>(max: 100, maxSize: 1_024, ttl: 300)
         #expect(config.max == 100)
         #expect(config.maxSize == 1024)
@@ -44,7 +44,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration validates positive max")
-    func testConfigurationValidatesPositiveMax() throws {
+    func testConfigurationValidatesPositiveMax() async throws {
         #expect(throws: ConfigurationError.invalidMax) {
             try Configuration<String, String>(max: 0)
         }
@@ -55,7 +55,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration validates positive maxSize")
-    func testConfigurationValidatesPositiveMaxSize() throws {
+    func testConfigurationValidatesPositiveMaxSize() async throws {
         #expect(throws: ConfigurationError.invalidMaxSize) {
             try Configuration<String, String>(maxSize: 0)
         }
@@ -66,7 +66,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration validates positive TTL")
-    func testConfigurationValidatesPositiveTTL() throws {
+    func testConfigurationValidatesPositiveTTL() async throws {
         #expect(throws: ConfigurationError.invalidTTL) {
             try Configuration<String, String>(ttl: 0)
         }
@@ -77,7 +77,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration has default values")
-    func testConfigurationDefaults() throws {
+    func testConfigurationDefaults() async throws {
         let config = try Configuration<String, String>(max: 100)
 
         #expect(config.ttlResolution == 1)
@@ -91,7 +91,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration accepts custom dispose handler")
-    func testConfigurationWithDisposeHandler() throws {
+    func testConfigurationWithDisposeHandler() async throws {
         let disposalTracker = DisposalTracker<String, Int>()
 
         var config = try Configuration<String, Int>(max: 10)
@@ -110,7 +110,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration accepts size calculation function")
-    func testConfigurationWithSizeCalculation() throws {
+    func testConfigurationWithSizeCalculation() async throws {
         var config = try Configuration<String, Data>(maxSize: 1_024)
         config.sizeCalculation = { value, _ in
             value.count
@@ -124,7 +124,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration validates maxEntrySize")
-    func testConfigurationMaxEntrySize() throws {
+    func testConfigurationMaxEntrySize() async throws {
         var config = try Configuration<String, String>(maxSize: 1_024)
         config.maxEntrySize = 512
 
@@ -135,7 +135,7 @@ struct ConfigurationTests {
     }
 
     @Test("Configuration is a value type")
-    func testConfigurationIsValueType() throws {
+    func testConfigurationIsValueType() async throws {
         let config1 = try Configuration<String, String>(max: 100)
         var config2 = config1
 

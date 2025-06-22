@@ -19,7 +19,7 @@ struct ThreadSafetyTests {
                 group.addTask {
                     for j in 0..<iterations {
                         let key = i * iterations + j
-                        cache.set(key, value: "value-\(key)")
+                        await cache.set(key, value: "value-\(key)")
                     }
                 }
             }
@@ -29,7 +29,7 @@ struct ThreadSafetyTests {
                 group.addTask {
                     for j in 0..<iterations {
                         let key = i * iterations + j
-                        _ = cache.get(key)
+                        _ = await cache.get(key)
                     }
                 }
             }
@@ -39,15 +39,15 @@ struct ThreadSafetyTests {
                 group.addTask {
                     for j in 0..<iterations/2 {
                         let key = i * iterations + j
-                        _ = cache.delete(key)
+                        _ = await cache.delete(key)
                     }
                 }
             }
         }
         
         // Verify cache is in a consistent state
-        #expect(cache.size <= 1000)
-        #expect(cache.size >= 0)
+        #expect(await cache.size <= 1000)
+        #expect(await cache.size >= 0)
     }
     
     @Test("Cache maintains consistency under concurrent evictions")
@@ -60,18 +60,19 @@ struct ThreadSafetyTests {
             for i in 0..<5 {
                 group.addTask {
                     for j in 0..<10 {
-                        cache.set(i * 10 + j, value: "value-\(i * 10 + j)")
+                        await cache.set(i * 10 + j, value: "value-\(i * 10 + j)")
                     }
                 }
             }
         }
         
         // Cache should never exceed max size
-        #expect(cache.size <= 10)
+        #expect(await cache.size <= 10)
         
         // All operations should complete without crashes
-        let entries = cache.entries()
-        #expect(entries.count == cache.size)
+        let entries = await cache.entries()
+        let size = await cache.size
+        #expect(entries.count == size)
     }
     
     @Test("Disposal callbacks are thread-safe")
@@ -89,7 +90,7 @@ struct ThreadSafetyTests {
             for i in 0..<10 {
                 group.addTask {
                     for j in 0..<20 {
-                        cache.set(i * 20 + j, value: "value-\(i * 20 + j)")
+                        await cache.set(i * 20 + j, value: "value-\(i * 20 + j)")
                     }
                 }
             }
@@ -97,6 +98,6 @@ struct ThreadSafetyTests {
         
         // Should have evicted items
         #expect(disposalTracker.count > 0)
-        #expect(cache.size <= 50)
+        #expect(await cache.size <= 50)
     }
 }
