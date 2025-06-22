@@ -7,7 +7,7 @@ public final class LRUCache<Key: Hashable, Value> {
     private var dict: [Key: LRUNode<Key, Value>] = [:]
     private var head: LRUNode<Key, Value>?
     private var tail: LRUNode<Key, Value>?
-    private var currentSize: Int = 0
+    private var totalSize: Int = 0
     
     /// The maximum number of items in the cache
     public var max: Int? {
@@ -17,6 +17,11 @@ public final class LRUCache<Key: Hashable, Value> {
     /// The current number of items in the cache
     public var size: Int {
         dict.count
+    }
+    
+    /// The total calculated size of all items in the cache
+    public var calculatedSize: Int {
+        totalSize
     }
     
     /// Initialize a new LRU cache with the given configuration
@@ -39,6 +44,11 @@ public final class LRUCache<Key: Hashable, Value> {
             if !noDeleteOnStaleGet {
                 removeNode(node)
                 dict.removeValue(forKey: key)
+                
+                if let size = node.size {
+                    totalSize -= size
+                }
+                
                 configuration.dispose?(node.value, key, .expire)
             }
             
@@ -62,8 +72,23 @@ public final class LRUCache<Key: Hashable, Value> {
             purgeStale()
         }
         
+        let itemSize = calculateSize(for: value, key: key)
+        
+        /// Check maxEntrySize constraint
+        if let maxEntrySize = configuration.maxEntrySize, itemSize > maxEntrySize {
+            /// Item too large, don't add it
+            return
+        }
+        
         if let existingNode = dict[key] {
+            /// Update size tracking
+            if let oldSize = existingNode.size {
+                totalSize -= oldSize
+            }
+            
             existingNode.value = value
+            existingNode.size = itemSize
+            totalSize += itemSize
             
             if !configuration.noUpdateTTL || existingNode.ttl == nil {
                 existingNode.ttl = ttl ?? configuration.ttl
@@ -74,12 +99,21 @@ public final class LRUCache<Key: Hashable, Value> {
             return
         }
         
+        /// Check if we need to evict items to make space
+        if let maxSize = configuration.maxSize {
+            while totalSize + itemSize > maxSize && tail != nil {
+                evictLRU()
+            }
+        }
+        
         let newNode = LRUNode(key: key, value: value)
         newNode.ttl = ttl ?? configuration.ttl
         newNode.insertTime = newNode.ttl != nil ? now : nil
+        newNode.size = itemSize
         
         dict[key] = newNode
         addToHead(newNode)
+        totalSize += itemSize
         
         if let max = configuration.max, dict.count > max {
             evictLRU()
@@ -96,6 +130,11 @@ public final class LRUCache<Key: Hashable, Value> {
             if !configuration.noDeleteOnStaleGet {
                 removeNode(node)
                 dict.removeValue(forKey: key)
+                
+                if let size = node.size {
+                    totalSize -= size
+                }
+                
                 configuration.dispose?(node.value, key, .expire)
             }
             return false
@@ -118,6 +157,10 @@ public final class LRUCache<Key: Hashable, Value> {
         removeNode(node)
         dict.removeValue(forKey: key)
         
+        if let size = node.size {
+            totalSize -= size
+        }
+        
         configuration.dispose?(node.value, key, .delete)
         
         return true
@@ -132,6 +175,7 @@ public final class LRUCache<Key: Hashable, Value> {
         dict.removeAll()
         head = nil
         tail = nil
+        totalSize = 0
     }
     
     /// Get a value without updating its position in the LRU list
@@ -186,6 +230,10 @@ public final class LRUCache<Key: Hashable, Value> {
         removeNode(tailNode)
         dict.removeValue(forKey: tailNode.key)
         
+        if let size = tailNode.size {
+            totalSize -= size
+        }
+        
         configuration.dispose?(tailNode.value, tailNode.key, .evict)
     }
     
@@ -203,6 +251,11 @@ public final class LRUCache<Key: Hashable, Value> {
         for node in nodesToRemove {
             removeNode(node)
             dict.removeValue(forKey: node.key)
+            
+            if let size = node.size {
+                totalSize -= size
+            }
+            
             configuration.dispose?(node.value, node.key, .expire)
         }
     }
@@ -231,5 +284,12 @@ public final class LRUCache<Key: Hashable, Value> {
         let age = checkTime.timeIntervalSince(insertTime)
         
         return age > ttl
+    }
+    
+    private func calculateSize(for value: Value, key: Key) -> Int {
+        if let sizeCalculation = configuration.sizeCalculation {
+            return sizeCalculation(value, key)
+        }
+        return 1
     }
 }
