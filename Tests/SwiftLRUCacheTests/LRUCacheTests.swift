@@ -1,6 +1,7 @@
 import Testing
 @testable import SwiftLRUCache
 
-@Test func example() async throws {
-    #expect(true)
+@Suite("LRU Cache Integration Tests")
+struct LRUCacheTests {
+    
 }
