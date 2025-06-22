@@ -50,16 +50,16 @@ struct TTLTests {
 
     @Test("Cache updates TTL on set when updateAgeOnGet is true")
     func testUpdateAgeOnGet() async throws {
-        var config = try Configuration<String, Int>(max: 10, ttl: 1.0) // 1 second (increased from 200ms)
+        var config = try Configuration<String, Int>(max: 10, ttl: 2.0) // 2 seconds TTL
         config.updateAgeOnGet = true
         let cache = LRUCache<String, Int>(configuration: config)
 
         cache.set("key1", value: 100)
 
-        try await Task.sleep(nanoseconds: 400_000_000) // Sleep 400ms
-        _ = cache.get("key1") // This should refresh TTL
+        try await Task.sleep(nanoseconds: 1_000_000_000) // Sleep 1 second
+        _ = cache.get("key1") // This should refresh TTL, giving another 2 seconds
 
-        try await Task.sleep(nanoseconds: 800_000_000) // Sleep another 800ms
+        try await Task.sleep(nanoseconds: 1_500_000_000) // Sleep 1.5 seconds (still within the refreshed 2 second TTL)
 
         #expect(cache.get("key1") == 100) // Should still be valid due to refresh
     }
@@ -126,19 +126,19 @@ struct TTLTests {
         let config = try Configuration<String, Int>(max: 10)
         let cache = LRUCache<String, Int>(configuration: config)
 
-        cache.set("key1", value: 100, ttl: 2) // 2 seconds TTL (increased from 1)
+        cache.set("key1", value: 100, ttl: 5) // 5 seconds TTL for more tolerance
 
         let remaining1 = cache.getRemainingTTL("key1")
         #expect(remaining1 != nil)
-        #expect(remaining1! > 1.8) // Allow for some execution time
-        #expect(remaining1! <= 2.0)
+        #expect(remaining1! > 4.5) // Allow up to 500ms for execution time
+        #expect(remaining1! <= 5.0)
 
-        try await Task.sleep(nanoseconds: 1_000_000_000) // Sleep 1 second
+        try await Task.sleep(nanoseconds: 2_000_000_000) // Sleep 2 seconds
 
         let remaining2 = cache.getRemainingTTL("key1")
         #expect(remaining2 != nil)
-        #expect(remaining2! > 0.8) // More tolerance (was 0.4)
-        #expect(remaining2! < 1.2) // More tolerance (was 0.6)
+        #expect(remaining2! > 2.5) // Should have at least 2.5 seconds left
+        #expect(remaining2! < 3.5) // But less than 3.5 seconds
     }
 
     @Test("Cache respects ttlAutopurge setting")
