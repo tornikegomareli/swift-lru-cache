@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-06-22
+
+### Added
+- Size tracking and size-based eviction
+  - `calculatedSize` property to track total cache size
+  - Support for custom size calculation functions
+  - `maxSize` constraint for limiting total cache size
+  - `maxEntrySize` to reject items that are too large
+  - Size-based eviction that can remove multiple items to make space
+- Comprehensive size tracking tests (9 new tests)
+
+### Features
+- Size calculation defaults to 1 per item when no custom calculator is provided
+- All operations properly maintain size tracking
+- Size-based eviction works alongside count-based eviction
+
 ## [0.1.0] - 2024-06-22
 
 ### Added
