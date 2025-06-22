@@ -111,3 +111,6 @@ Package.resolved
 
 # Reference implementation
 node-lru-cache/
+
+# Generated benchmark results
+benchmark-results.md
