@@ -8,7 +8,7 @@
 
 A high-performance, thread safe, feature-complete Least Recently Used cache implementation for Swift, inspired by the popular Node.js [lru-cache](https://github.com/isaacs/node-lru-cache) package.
 
-## 🚀 Performance
+## Performance
 
 SwiftLRUCache delivers exceptional performance with **millions of operations per second**:
 
