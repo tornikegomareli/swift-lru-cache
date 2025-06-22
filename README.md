@@ -10,7 +10,7 @@ A high-performance, thread safe, feature-complete Least Recently Used cache impl
 
 ## Performance
 
-SwiftLRUCache delivers exceptional performance with **millions of operations per second**:
+SwiftLRUCache performance with **millions of operations per second**:
 
 | Operation | Performance | Time |
 |-----------|-------------|------|
