@@ -19,13 +19,12 @@ SwiftLRUCache performance with **millions of operations per second**:
 | **Has** | 7.8M+ ops/sec | ~128ns |
 | **Delete** | 7.8M+ ops/sec | ~127ns |
 
-### Key Performance Features
+### Key Performance things
 
 - **True O(1) complexity** for all operations
 - **Sub-microsecond latency** - most operations complete in under 1μs
 - **Consistent performance** across cache sizes (tested up to 1M items)
 - **Efficient memory usage** with optimized data structures
-- **Production-ready** concurrency with Swift's actor model
 
 [View detailed benchmarks](#benchmarks)
 
