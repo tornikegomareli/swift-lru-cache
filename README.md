@@ -13,19 +13,18 @@ A high-performance, thread safe, feature-complete Least Recently Used cache impl
 ```swift
 import SwiftLRUCache
 
-// Simple cache with max 100 items
+/// Simple cache with max 100 items
 let cache = LRUCache<String, String>(
     configuration: try! Configuration(max: 100)
 )
 
-// Use in async context
 Task {
-    // Store value
+    /// Store value
     await cache.set("key", value: "value")
     
-    // Retrieve value
+    /// Retrieve value
     if let value = await cache.get("key") {
-        print(value) // "value"
+        print(value)
     }
 }
 ```
