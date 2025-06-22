@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2024-06-22
+
 ### Added
 - Initial implementation of LRU Cache
 - Basic cache operations (get, set, has, delete, clear, peek)
@@ -14,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TTL (Time To Live) support with lazy expiration
 - Size-based eviction with custom size calculation
 - Disposal callbacks for cleanup
-- Comprehensive test suite with 41 tests
+- Comprehensive test suite with 41 tests)
 - GitHub Actions CI/CD workflows
 - SwiftLint integration
 - Documentation and examples
@@ -27,6 +29,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TTL refresh on access (updateAgeOnGet/Has)
 - Manual purge of expired items
 - Automatic purging option (ttlAutopurge)
-
-## [0.1.0] - TBD
-- Initial release
