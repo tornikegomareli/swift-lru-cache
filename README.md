@@ -180,7 +180,7 @@ SwiftLRUCache uses Swift's actor model for thread safety, which means all cache 
 
 ## Requirements
 
-- Swift 6.1+
+- Swift 6.0+
 - macOS 14.0+ / iOS 17.0+ / tvOS 17.0+ / watchOS 10.0+ / visionOS 1.0+
 
 ## Contributing
