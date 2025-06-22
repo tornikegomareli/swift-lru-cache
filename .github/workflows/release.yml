@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: '6.1'
+    
+    - name: Build
+      run: swift build -v
+    
+    - name: Run tests
+      run: swift test -v
+
+  release:
+    name: Create Release
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get previous tag
+      id: previoustag
+      run: |
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        echo "tag=${PREVIOUS_TAG}" >> $GITHUB_OUTPUT
+    
+    - name: Calculate next version
+      id: nextversion
+      run: |
+        PREVIOUS_TAG="${{ steps.previoustag.outputs.tag }}"
+        # Remove 'v' prefix and split into parts
+        VERSION=${PREVIOUS_TAG#v}
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+        
+        # Analyze commit messages since last tag
+        COMMIT_MESSAGES=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
+        
+        # Determine version bump type
+        if echo "$COMMIT_MESSAGES" | grep -q "BREAKING CHANGE\|!:"; then
+          MAJOR=$((MAJOR + 1))
+          MINOR=0
+          PATCH=0
+        elif echo "$COMMIT_MESSAGES" | grep -q "^feat"; then
+          MINOR=$((MINOR + 1))
+          PATCH=0
+        else
+          PATCH=$((PATCH + 1))
+        fi
+        
+        NEXT_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+        echo "version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
+        echo "Next version: ${NEXT_VERSION}"
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        PREVIOUS_TAG="${{ steps.previoustag.outputs.tag }}"
+        NEXT_VERSION="${{ steps.nextversion.outputs.version }}"
+        
+        # Generate changelog
+        echo "# Changelog" > CHANGELOG_TEMP.md
+        echo "" >> CHANGELOG_TEMP.md
+        echo "## ${NEXT_VERSION}" >> CHANGELOG_TEMP.md
+        echo "" >> CHANGELOG_TEMP.md
+        
+        # Group commits by type
+        echo "### Features" >> CHANGELOG_TEMP.md
+        git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" | grep "^feat" | sed 's/^feat: /- /' | sed 's/^feat(/- /' >> CHANGELOG_TEMP.md || true
+        echo "" >> CHANGELOG_TEMP.md
+        
+        echo "### Bug Fixes" >> CHANGELOG_TEMP.md
+        git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" | grep "^fix" | sed 's/^fix: /- /' | sed 's/^fix(/- /' >> CHANGELOG_TEMP.md || true
+        echo "" >> CHANGELOG_TEMP.md
+        
+        echo "### Other Changes" >> CHANGELOG_TEMP.md
+        git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" | grep -v "^feat\|^fix" | sed 's/^/- /' >> CHANGELOG_TEMP.md || true
+        echo "" >> CHANGELOG_TEMP.md
+        
+        # Set multiline output
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat CHANGELOG_TEMP.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.nextversion.outputs.version }}
+        name: ${{ steps.nextversion.outputs.version }}
+        body: ${{ steps.changelog.outputs.changelog }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
