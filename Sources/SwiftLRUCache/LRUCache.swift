@@ -1,12 +1,13 @@
 import Foundation
 
-/// A least-recently-used (LRU) cache implementation
-public final class LRUCache<Key: Hashable, Value> {
+/// A least-recently-used (LRU) cache implementation with thread-safe access
+public final class LRUCache<Key: Hashable & Sendable, Value: Sendable>: @unchecked Sendable {
     private let configuration: Configuration<Key, Value>
     private var dict: [Key: LRUNode<Key, Value>] = [:]
     private var head: LRUNode<Key, Value>?
     private var tail: LRUNode<Key, Value>?
     private var totalSize: Int = 0
+    private let lock = NSLock()
 
     /// The maximum number of items in the cache
     public var max: Int? {
@@ -15,12 +16,16 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// The current number of items in the cache
     public var size: Int {
-        dict.count
+        lock.lock()
+        defer { lock.unlock() }
+        return dict.count
     }
 
     /// The total calculated size of all items in the cache
     public var calculatedSize: Int {
-        totalSize
+        lock.lock()
+        defer { lock.unlock() }
+        return totalSize
     }
 
     /// Initialize a new LRU cache with the given configuration
@@ -30,6 +35,9 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Get a value from the cache
     public func get(_ key: Key, options: GetOptions? = nil) -> Value? {
+        lock.lock()
+        defer { lock.unlock() }
+        
         guard let node = dict[key] else {
             return nil
         }
@@ -65,10 +73,13 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Set a value in the cache
     public func set(_ key: Key, value: Value, ttl: TimeInterval? = nil) {
+        lock.lock()
+        defer { lock.unlock() }
+        
         let now = Date()
 
         if configuration.ttlAutopurge {
-            purgeStale()
+            _purgeStale()
         }
 
         let itemSize = calculateSize(for: value, key: key)
@@ -121,6 +132,9 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Check if a key exists in the cache
     public func has(_ key: Key) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        
         guard let node = dict[key] else {
             return false
         }
@@ -149,6 +163,9 @@ public final class LRUCache<Key: Hashable, Value> {
     /// Delete a key from the cache
     @discardableResult
     public func delete(_ key: Key) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        
         guard let node = dict[key] else {
             return false
         }
@@ -167,6 +184,9 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Clear all items from the cache
     public func clear() {
+        lock.lock()
+        defer { lock.unlock() }
+        
         for (key, node) in dict {
             configuration.dispose?(node.value, key, .delete)
         }
@@ -179,7 +199,9 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Get a value without updating its position in the LRU list
     public func peek(_ key: Key) -> Value? {
-        dict[key]?.value
+        lock.lock()
+        defer { lock.unlock() }
+        return dict[key]?.value
     }
 
     private func addToHead(_ node: LRUNode<Key, Value>) {
@@ -238,6 +260,12 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Remove all stale entries
     public func purgeStale() {
+        lock.lock()
+        defer { lock.unlock() }
+        _purgeStale()
+    }
+    
+    private func _purgeStale() {
         let now = Date()
         var nodesToRemove: [LRUNode<Key, Value>] = []
 
@@ -259,6 +287,9 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Get the remaining TTL for a key
     public func getRemainingTTL(_ key: Key) -> TimeInterval? {
+        lock.lock()
+        defer { lock.unlock() }
+        
         guard let node = dict[key],
               let ttl = node.ttl,
               let insertTime = node.insertTime else {
@@ -292,6 +323,9 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Remove and return the least recently used item
     public func pop() -> (key: Key, value: Value)? {
+        lock.lock()
+        defer { lock.unlock() }
+        
         guard let tailNode = tail else {
             return nil
         }
@@ -310,6 +344,9 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Iterate over all items in the cache from most to least recently used
     public func forEach(_ body: (Key, Value) throws -> Void) rethrows {
+        lock.lock()
+        defer { lock.unlock() }
+        
         var current = head
         while let node = current {
             try body(node.key, node.value)
@@ -319,53 +356,74 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Get all entries as an array of tuples, ordered from most to least recently used
     public func entries() -> [(key: Key, value: Value)] {
+        lock.lock()
+        defer { lock.unlock() }
+        
         var result: [(key: Key, value: Value)] = []
-        forEach { key, value in
-            result.append((key, value))
+        var current = head
+        while let node = current {
+            result.append((node.key, node.value))
+            current = node.next
         }
         return result
     }
 
     /// Get all keys in the cache, ordered from most to least recently used
     public func keys() -> [Key] {
+        lock.lock()
+        defer { lock.unlock() }
+        
         var result: [Key] = []
-        forEach { key, _ in
-            result.append(key)
+        var current = head
+        while let node = current {
+            result.append(node.key)
+            current = node.next
         }
         return result
     }
 
     /// Get all values in the cache, ordered from most to least recently used
     public func values() -> [Value] {
+        lock.lock()
+        defer { lock.unlock() }
+        
         var result: [Value] = []
-        forEach { _, value in
-            result.append(value)
+        var current = head
+        while let node = current {
+            result.append(node.value)
+            current = node.next
         }
         return result
     }
 
     /// Create a debug representation of the cache
     public func dump() -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        
         var lines: [String] = []
         lines.append("LRUCache<\(Key.self), \(Value.self)> {")
-        lines.append("  size: \(size)")
+        lines.append("  size: \(dict.count)")
         lines.append("  max: \(max.map { "\($0)" } ?? "nil")")
-        lines.append("  calculatedSize: \(calculatedSize)")
+        lines.append("  calculatedSize: \(totalSize)")
         lines.append("  maxSize: \(configuration.maxSize.map { "\($0)" } ?? "nil")")
         lines.append("  items (MRU to LRU):")
 
-        forEach { key, value in
-            if let node = dict[key] {
-                var details = "    \(key): \(value)"
-                if node.ttl != nil, node.insertTime != nil {
-                    let remaining = getRemainingTTL(key) ?? 0
+        var current = head
+        while let node = current {
+            var details = "    \(node.key): \(node.value)"
+            if node.ttl != nil, node.insertTime != nil {
+                if let ttl = node.ttl, let insertTime = node.insertTime {
+                    let elapsed = Date().timeIntervalSince(insertTime)
+                    let remaining = Swift.max(0, ttl - elapsed)
                     details += " (TTL: \(remaining)s)"
                 }
-                if let size = node.size {
-                    details += " (size: \(size))"
-                }
-                lines.append(details)
             }
+            if let size = node.size {
+                details += " (size: \(size))"
+            }
+            lines.append(details)
+            current = node.next
         }
 
         lines.append("}")

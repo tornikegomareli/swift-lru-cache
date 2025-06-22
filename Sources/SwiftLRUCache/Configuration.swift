@@ -22,7 +22,7 @@ public enum ConfigurationError: Error, LocalizedError {
 }
 
 /// The reason why an item was removed from the cache
-public enum DisposeReason {
+public enum DisposeReason: Sendable {
     case evict
     case set
     case delete
@@ -31,14 +31,14 @@ public enum DisposeReason {
 }
 
 /// The reason why an item was added to the cache
-public enum InsertReason {
+public enum InsertReason: Sendable {
     case add
     case update
     case replace
 }
 
 /// Configuration options for LRUCache
-public struct Configuration<Key, Value> {
+public struct Configuration<Key, Value>: Sendable where Key: Sendable, Value: Sendable {
     /// Maximum number of items in cache
     public var max: Int?
 
@@ -76,16 +76,16 @@ public struct Configuration<Key, Value> {
     public var maxEntrySize: Int?
 
     /// Function to calculate item size
-    public var sizeCalculation: ((Value, Key) -> Int)?
+    public var sizeCalculation: (@Sendable (Value, Key) -> Int)?
 
     /// Function called when items are removed
-    public var dispose: ((Value, Key, DisposeReason) -> Void)?
+    public var dispose: (@Sendable (Value, Key, DisposeReason) -> Void)?
 
     /// Function called when items are inserted
-    public var onInsert: ((Value, Key, InsertReason) -> Void)?
+    public var onInsert: (@Sendable (Value, Key, InsertReason) -> Void)?
 
     /// Function called after items are disposed
-    public var disposeAfter: ((Value, Key, DisposeReason) -> Void)?
+    public var disposeAfter: (@Sendable (Value, Key, DisposeReason) -> Void)?
 
     public init(
         max: Int? = nil,

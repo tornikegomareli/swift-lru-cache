@@ -134,11 +134,11 @@ struct AdvancedOperationsTests {
 
     @Test("pop with dispose handler")
     func testPopWithDisposeHandler() throws {
-        var disposedItems: [(String, Int, DisposeReason)] = []
+        let disposalTracker = DisposalTracker<String, Int>()
 
         var config = try Configuration<String, Int>(max: 3)
         config.dispose = { value, key, reason in
-            disposedItems.append((key, value, reason))
+            disposalTracker.track(value: value, key: key, reason: reason)
         }
 
         let cache = LRUCache<String, Int>(configuration: config)
@@ -148,10 +148,11 @@ struct AdvancedOperationsTests {
 
         let popped = cache.pop()
         #expect(popped?.key == "a")
-        #expect(disposedItems.count == 1)
-        #expect(disposedItems[0].0 == "a")
-        #expect(disposedItems[0].1 == 1)
-        #expect(disposedItems[0].2 == .evict)
+        #expect(disposalTracker.count == 1)
+        let item = disposalTracker.getItem(at: 0)!
+        #expect(item.0 == "a")
+        #expect(item.1 == 1)
+        #expect(item.2 == .evict)
     }
 
     @Test("operations on empty cache")

@@ -92,20 +92,21 @@ struct ConfigurationTests {
 
     @Test("Configuration accepts custom dispose handler")
     func testConfigurationWithDisposeHandler() throws {
-        var disposedItems: [(String, Int, DisposeReason)] = []
+        let disposalTracker = DisposalTracker<String, Int>()
 
         var config = try Configuration<String, Int>(max: 10)
         config.dispose = { value, key, reason in
-            disposedItems.append((key, value, reason))
+            disposalTracker.track(value: value, key: key, reason: reason)
         }
 
         #expect(config.dispose != nil)
 
         config.dispose?(42, "test", .evict)
-        #expect(disposedItems.count == 1)
-        #expect(disposedItems[0].0 == "test")
-        #expect(disposedItems[0].1 == 42)
-        #expect(disposedItems[0].2 == .evict)
+        #expect(disposalTracker.count == 1)
+        let item = disposalTracker.getItem(at: 0)!
+        #expect(item.0 == "test")
+        #expect(item.1 == 42)
+        #expect(item.2 == .evict)
     }
 
     @Test("Configuration accepts size calculation function")
