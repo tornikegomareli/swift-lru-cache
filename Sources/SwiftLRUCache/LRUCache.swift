@@ -179,7 +179,7 @@ public final class LRUCache<Key: Hashable, Value> {
 
     /// Get a value without updating its position in the LRU list
     public func peek(_ key: Key) -> Value? {
-        return dict[key]?.value
+        dict[key]?.value
     }
 
     private func addToHead(_ node: LRUNode<Key, Value>) {
@@ -241,10 +241,8 @@ public final class LRUCache<Key: Hashable, Value> {
         let now = Date()
         var nodesToRemove: [LRUNode<Key, Value>] = []
 
-        for (_, node) in dict {
-            if isStale(node, now: now) {
-                nodesToRemove.append(node)
-            }
+        for (_, node) in dict where isStale(node, now: now) {
+            nodesToRemove.append(node)
         }
 
         for node in nodesToRemove {
@@ -374,4 +372,3 @@ public final class LRUCache<Key: Hashable, Value> {
         return lines.joined(separator: "\n")
     }
 }
-
